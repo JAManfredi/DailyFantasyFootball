@@ -2,7 +2,7 @@ use LWP::Simple;
 use HTML::TableExtract;
 use HTML::Scrubber;
 
-my $url = 'http://sports.yahoo.com/nfl/stats/byposition?pos=WR&conference=NFL&year=season_2015&timeframe=ToDate&sort=17';
+my $url = 'http://sports.yahoo.com/nfl/stats/byposition?pos=WR&conference=NFL&year=season_2016&timeframe=ToDate&sort=17';
 
 $content = get($url);
 die "Couldn't get wr data" unless defined $content;

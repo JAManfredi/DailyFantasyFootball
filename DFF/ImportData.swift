@@ -58,12 +58,14 @@ class ImportData {
     
     fileprivate func populateSchedule(_ finished: ()->())
     {
-        var paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-        let docDirectory = paths[0]
-        let schedPath = docDirectory + "/NFL/2015-nfl-schedule.csv"
+        let csvPath = Bundle.main.path(forResource: "2015-nfl-schedule", ofType: "csv")
+        guard csvPath != nil && FileManager().fileExists(atPath: csvPath!) else {
+            finished()
+            return
+        }
         
         do {
-            let schedString = try NSString(contentsOfFile: schedPath, encoding: String.Encoding.utf8.rawValue)
+            let schedString = try NSString(contentsOfFile: csvPath!, encoding: String.Encoding.utf8.rawValue)
             let teamSchedArray = schedString.components(separatedBy: "\n")
             for x in 1 ..< 33 {
                 // Save Each Row
@@ -90,12 +92,14 @@ class ImportData {
     
     fileprivate func populateTeamDefenseData(_ finished: ()->())
     {
-        var paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-        let docDirectory = paths[0]
-        let teamDefDataPath = docDirectory + "/NFL/team_defense.txt"
+        let txtPath = Bundle.main.path(forResource: "team_defense", ofType: "txt")
+        guard txtPath != nil && FileManager().fileExists(atPath: txtPath!) else {
+            finished()
+            return
+        }
         
         do {
-            let defString = try NSString(contentsOfFile: teamDefDataPath, encoding: String.Encoding.utf8.rawValue)
+            let defString = try NSString(contentsOfFile: txtPath!, encoding: String.Encoding.utf8.rawValue)
             let defArray = defString.components(separatedBy: "\n")
             for x in 0 ..< defArray.count {
                 let defRow = defArray[x]
@@ -139,91 +143,20 @@ class ImportData {
     {
         self.setupData { () -> () in
             self.importDraftKingsData({ () -> () in
-//                self.importQBData({ () -> () in
-//                    print("--> QB Data Imported")
-//                    self.importRBData({ () -> () in
-//                        print("--> RB Data Imported")
+                self.importQBData({ () -> () in
+                    print("--> QB Data Imported")
+                    self.importRBData({ () -> () in
+                        print("--> RB Data Imported")
                         self.importWRData({ () -> () in
                             print("--> WR Data Imported")
-//                            self.importTEData({ () -> () in
-//                                print("--> TE Data Imported")
-//                                print("Setup Complete!")
-                            
-                                self.calculatePlayerScores()
-//                            })
+                            self.importTEData({ () -> () in
+                                print("--> TE Data Imported")
+                                print("Setup Complete!")
+                            })
                         })
-//                    })
-//                })
+                    })
+                })
             })
-        }
-    }
-    
-    fileprivate func calculatePlayerScores()
-    {
-        do {
-            let realm = try Realm()
-            let wrs = realm.objects(Player.self).filter("position = 'WR' AND games_played > 0 AND salary > 0 AND receptions >= 1")
-            var totalPlayerScores = 0.0
-            
-            // Set Initial Score & Get Avg
-            for wr: Player in wrs {
-                // salary / (targets / gamesplayed) / 100
-                // Rec Yards Per Game / 10
-                // Receiving TDs * 2
-                // Home Game: NO = 0 or 2pts
-                // Defense Pass Standing / 4
-                
-//                if (wr.name_code == "DonteMoncrief" || wr.name_code == "MarquessWilson") {
-//                    print("Stop")
-//                }
-                
-                // WR Score
-//                let nameCode = wr.name_code
-//                let name = wr.full_name
-                let metricOne = Double(wr.targets / wr.games_played) / 1.4
-                let metricTwo = wr.rec_yards_per_game / 10
-                let metricThree = Double(wr.receiving_tds) * 4
-                let metricFour = (wr.home_game) ? 1.0 : 0
-                let metricFive = Double(wr.opponent_pass_d) / 4.0
-                let total = metricOne + metricTwo + metricThree + metricFour + metricFive
-                
-//                if (wr.name_code == "DonteMoncrief" || wr.name_code == "MarquessWilson") {
-//                    print("Stop")
-//                }
-                
-                // Save For Player
-                try realm.write {
-                    wr.player_score = total
-                }
-                
-                if (wr.games_played >= 1 && wr.receptions >= 1) {
-                    totalPlayerScores += total
-                }
-            }
-            
-            // Loop Again & Adjust Score
-            let avg_player_score = totalPlayerScores/Double(wrs.count)
-            for wr: Player in wrs {
-                var psAdj = 0.0
-                if (avg_player_score > 0) {
-                    psAdj = wr.player_score - avg_player_score
-                } else {
-                    psAdj = wr.player_score + avg_player_score
-                }
-
-                // Save Adjusted Player Score
-                try realm.write {
-                    wr.player_score = psAdj
-                }
-            }
-            
-            let wrss = realm.objects(Player.self).filter("position = 'WR' AND games_played > 0 AND salary > 0 AND receptions >= 1").sorted(byProperty: "player_score", ascending: false)
-            for wrr: Player in wrss {
-                print("\(wrr.full_name)\t\t\t\(wrr.player_score) \(wrr.salary) \(wrr.targets) \(wrr.receiving_yards) \(wrr.receiving_tds) \(wrr.opponent_pass_d)")
-            }
-            
-        } catch {
-            print("Error Setting Up Player Scores")
         }
     }
     
@@ -231,12 +164,14 @@ class ImportData {
     
     fileprivate func importDraftKingsData(_ finished: @escaping ()->())
     {
-        var paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-        let docDirectory = paths[0]
-        let dkSalariesPath = docDirectory + "/NFL/DKSalaries.csv"
+        let csvPath = Bundle.main.path(forResource: "DKSalaries", ofType: "csv")
+        guard csvPath != nil && FileManager().fileExists(atPath: csvPath!) else {
+            finished()
+            return
+        }
         
         do {
-            let dkString = try NSString(contentsOfFile: dkSalariesPath, encoding: String.Encoding.utf8.rawValue)
+            let dkString = try NSString(contentsOfFile: csvPath!, encoding: String.Encoding.utf8.rawValue)
             let dkArray = dkString.components(separatedBy: "\n")
             
             // Create Objects In Background
@@ -308,12 +243,14 @@ class ImportData {
     
     fileprivate func importQBData(_ finished: @escaping ()->())
     {
-        var paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-        let docDirectory = paths[0]
-        let qbDataPath = docDirectory + "/NFL/qb_data.txt"
+        let txtPath = Bundle.main.path(forResource: "qb_data", ofType: "txt")
+        guard txtPath != nil && FileManager().fileExists(atPath: txtPath!) else {
+            finished()
+            return
+        }
         
         do {
-            let qbString = try NSString(contentsOfFile: qbDataPath, encoding: String.Encoding.utf8.rawValue)
+            let qbString = try NSString(contentsOfFile: txtPath!, encoding: String.Encoding.utf8.rawValue)
             let qbArray = qbString.components(separatedBy: "\n")
             
             // Update Objects In Background
@@ -378,12 +315,14 @@ class ImportData {
 
     fileprivate func importRBData(_ finished:@escaping ()->())
     {
-        var paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-        let docDirectory = paths[0]
-        let rbDataPath = docDirectory + "/NFL/rb_data.txt"
+        let txtPath = Bundle.main.path(forResource: "rb_data", ofType: "txt")
+        guard txtPath != nil && FileManager().fileExists(atPath: txtPath!) else {
+            finished()
+            return
+        }
         
         do {
-            let rbString = try NSString(contentsOfFile: rbDataPath, encoding: String.Encoding.utf8.rawValue)
+            let rbString = try NSString(contentsOfFile: txtPath!, encoding: String.Encoding.utf8.rawValue)
             let rbArray = rbString.components(separatedBy: "\n")
             // Update Objects In Background
             DispatchQueue.global(qos: .background).async {
@@ -445,12 +384,14 @@ class ImportData {
 
     fileprivate func importWRData(_ finished: @escaping ()->())
     {
-        var paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-        let docDirectory = paths[0]
-        let wrDataPath = docDirectory + "/NFL/wr_data.txt"
+        let txtPath = Bundle.main.path(forResource: "wr_data", ofType: "txt")
+        guard txtPath != nil && FileManager().fileExists(atPath: txtPath!) else {
+            finished()
+            return
+        }
         
         do {
-            let wrString = try NSString(contentsOfFile: wrDataPath, encoding: String.Encoding.utf8.rawValue)
+            let wrString = try NSString(contentsOfFile: txtPath!, encoding: String.Encoding.utf8.rawValue)
             let wrArray = wrString.components(separatedBy: "\n")
             // Update Objects In Background
             DispatchQueue.global(qos: .background).async {
@@ -522,12 +463,14 @@ class ImportData {
 
     fileprivate func importTEData(_ finished: @escaping ()->())
     {
-        var paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-        let docDirectory = paths[0]
-        let teDataPath = docDirectory + "/NFL/te_data.txt"
+        let txtPath = Bundle.main.path(forResource: "te_data", ofType: "txt")
+        guard txtPath != nil && FileManager().fileExists(atPath: txtPath!) else {
+            finished()
+            return
+        }
         
         do {
-            let teString = try NSString(contentsOfFile: teDataPath, encoding: String.Encoding.utf8.rawValue)
+            let teString = try NSString(contentsOfFile: txtPath!, encoding: String.Encoding.utf8.rawValue)
             let teArray = teString.components(separatedBy: "\n")
             // Update Objects In Background
             DispatchQueue.global(qos: .background).async {
