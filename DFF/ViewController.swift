@@ -15,11 +15,14 @@ class ViewController: NSViewController
     override func viewDidLoad()
     {
         super.viewDidLoad()
-        
         let setup = ImportData(forWeek: 2)
         setup.importNFLData { () -> () in
             // Load View
         }
+    }
+    
+    override func viewDidAppear() {
+        super.viewDidAppear()
     }
 
     override var representedObject: Any? {
